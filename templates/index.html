@@ -23,5 +23,11 @@
         </tr>
         {% endfor %}
     </table>
+    <div class = "centered">
+        {% block action %}
+        <button onclick="window.location.href='/insert'" type="button">Insert</button>
+        <button onclick="window.location.href='/delete'" type="button">Delete</button>
+        {% endblock %}
+    </div>
 </body>
 </html>

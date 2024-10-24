@@ -1,0 +1,19 @@
+{% extends 'index.html' %}
+
+{% block action %}
+<form action="{{ url_for('insert_form') }}" method="POST">
+    <label for="customer_id">Customer Id</label>
+    <input type="number" name="customer_id" id="customer_id" required><br><br>
+    
+    <label for="customer_name">Customer Name</label>
+    <input type="text" name="customer_name" id="customer_name" required><br><br>
+
+    <label for="customer_type">Customer Type</label>
+    <input type="text" name="customer_type" id="customer_type" maxlength="1" placeholder="Please enter one character" required><br><br>
+
+    <label for="date_time">Date and time</label>
+    <input type="datetime-local" name="date_time" id="date_time" required><br>
+
+    <button type="submit">Insert</button>
+</form>
+{% endblock %}
