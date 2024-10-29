@@ -3,6 +3,15 @@ import mysql.connector
 
 app = Flask(__name__)
 
+schema = {"customer_table":{"customer_id":{"type":"number"},
+                            "customer_name":{"type":"text","maxlength":45},
+                            "customer_type":{"type":"text","maxlength":1,"placeholder":"Please enter one character"},
+                            "date_time":{"type":"datetime-local"}},
+          "orders":{"order_id":{"type":"number"},
+                    "customer_id":{"type":"number"},
+                    "order_date":{"type":"datetime-local"},
+                    "amount":{"type":"number"}}}
+
 def get_db():
     if 'db' not in g:
         g.db = mysql.connector.connect(
@@ -36,48 +45,59 @@ def execute_query(query, q_type = 'select'):
 
 @app.route("/")
 def home():
-    query = "select * from `sys`.`customer_table`;"
+    return redirect("/display/customer_table")
+    
+@app.route("/display/<table_name>")
+def display(table_name):
+    query = "select * from `sys`.`"+ table_name +"`;"
     resp = execute_query(query)
 
     if isinstance(resp, str):
         return resp
     else:
-        return render_template('index.html',customers = resp)
+        return render_template('display.html',values = resp, table_name = table_name, schema = schema[table_name])
 
-@app.route("/insert")
-def insert():
-    query = "select * from `sys`.`customer_table`;"
+@app.route("/insert/<table_name>")
+def insert(table_name):
+    query = "select * from `sys`.`"+ table_name +"`;"
     resp = execute_query(query)
 
     if isinstance(resp, str):
         return resp
     else:
-        return render_template('insert.html',customers = resp)
+        return render_template('insert.html',values = resp, table_name = table_name, schema = schema[table_name])
 
-@app.route("/delete")
-def delete():
-    query = "select * from `sys`.`customer_table`;"
+@app.route("/delete/<table_name>")
+def delete(table_name):
+    query = "select * from `sys`.`"+ table_name +"`;"
     resp = execute_query(query)
 
     if isinstance(resp, str):
         return resp
     else:
-        return render_template('delete.html',customers = resp)
+        return render_template('delete.html',values = resp, table_name = table_name, schema = schema[table_name])
 
-@app.route("/insert_form",methods=["POST"])
-def insert_form():
-    customer_id = request.form['customer_id']
-    customer_name = request.form['customer_name']
-    customer_type = request.form['customer_type']
-    date_time = request.form['date_time']
+@app.route("/insert_form/<table_name>",methods=["POST"])
+def insert_form(table_name):
+    columns = {}
+    strings = []
+    for column,args in schema[table_name].items():
+        columns[column] = request.form[column]
+        if args["type"] == "number":
+            strings.append(request.form[column])
+        elif args["type"] == "text":
+            strings.append("'" + request.form[column] + "'")
+        elif args["type"] == "datetime-local":
+            strings.append("'" + ' '.join(request.form[column].split('T')) + ":00'")
+    string = ", ".join(strings)
 
-    query = f"insert into `sys`.`customer_table` values (%d,'%s','%s','%s:00');" % (int(customer_id),customer_name,customer_type,' '.join(date_time.split('T')))
+    query = f"insert into `sys`.`%s` values (%s);" % (table_name,string)
     resp = execute_query(query,q_type="CRUD")
 
     if isinstance(resp, str):
         return resp
     else:
-        return redirect('/')
+        return redirect(url_for('display', table_name = table_name))
     
 @app.route("/delete_form",methods=["POST"])
 def delete_form():
@@ -87,7 +107,7 @@ def delete_form():
         if v == '':
             continue
             
-        if k == 'customer_id':
+        if k == 'customer_id' or k == 'order_id':
             filters.append(k+" = "+v)
         else:
             filters.append(k+" = '"+v+"'")
