@@ -6,6 +6,7 @@
 </head>
 <body>
     <h1>{{ table_name }}</h1>
+    <div class = "centered">
     <form action="{{ url_for('edit_table', table_name = table_name) }}" method="POST">
         {% for column,args in schema.items() %}
         <label for="{{ column }}">{{ column }}</label>
@@ -20,4 +21,5 @@
     
         <button type="submit">Update</button>
     </form>
+    </div>
 </body>
