@@ -76,6 +76,30 @@ def delete(table_name):
         return resp
     else:
         return render_template('delete.html',values = resp, table_name = table_name, schema = schema[table_name])
+    
+@app.route("/edit_table/<table_name>",methods=["POST"])
+def edit_table(table_name):
+    filters = []
+
+    for k,v in request.form.items():
+        if k == 's_id' or v == '':
+            continue
+            
+        if k == 'customer_id' or k == 'order_id':
+            filters.append(k+" = "+v)
+        else:
+            filters.append(k+" = '"+v+"'")
+
+    query = f"update `sys`.`%s` set %s where %s;" % (table_name, ', '.join(filters), request.form['s_id'])
+    print(query)
+    resp = execute_query(query,q_type="CRUD")
+
+    if isinstance(resp, str):
+        return resp
+    else:
+        return redirect(url_for('display', table_name = table_name))
+
+    return
 
 @app.route("/insert_form/<table_name>",methods=["POST"])
 def insert_form(table_name):
@@ -99,8 +123,8 @@ def insert_form(table_name):
     else:
         return redirect(url_for('display', table_name = table_name))
     
-@app.route("/delete_form",methods=["POST"])
-def delete_form():
+@app.route("/delete_form/<table_name>",methods=["POST"])
+def delete_form(table_name):
     filters = []
 
     for k,v in request.form.items():
@@ -112,11 +136,42 @@ def delete_form():
         else:
             filters.append(k+" = '"+v+"'")
 
-    query = f"delete from `sys`.`customer_table` where %s;" % (' and '.join(filters))
-    print(query)
+    query = f"delete from `sys`.`%s` where %s;" % (table_name, ' and '.join(filters))
     resp = execute_query(query,q_type="CRUD")
 
     if isinstance(resp, str):
         return resp
     else:
-        return redirect('/')
+        return redirect(url_for('display', table_name = table_name))
+
+@app.route('/process_row/<table_name>', methods=["POST"])
+def process_row(table_name):
+    if request.form['action'] == 'delete':
+        if table_name == 'customer_table':
+            query = f"delete from `sys`.`%s` where customer_id = %s;" % (table_name, request.form['customer_id'])
+        else:
+            query = f"delete from `sys`.`%s` where order_id = %s;" % (table_name, request.form['order_id'])
+        resp = execute_query(query,q_type="CRUD")
+        if isinstance(resp, str):
+            return resp
+        else:
+            return redirect(url_for('display', table_name = table_name))
+        
+    elif request.form['action'] == 'view_orders':
+        customer_id = request.form['customer_id']
+        query = f"select * from `sys`.`orders` where customer_id = %s" % (customer_id)
+        resp = execute_query(query)
+        print(query)
+
+        if isinstance(resp, str):
+            return resp
+        else:
+            return render_template('display.html',values = resp, table_name = 'orders', schema = schema[table_name])
+
+    elif request.form['action'] == 'edit':
+        if table_name == 'customer_table':
+            s_id = "customer_id = " + request.form['customer_id']
+        else:
+            s_id = "order_id = " + request.form['order_id']
+
+        return render_template('edit.html', table_name=table_name, schema=schema[table_name], s_id = s_id)

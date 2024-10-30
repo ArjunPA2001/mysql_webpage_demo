@@ -1,18 +1,16 @@
 {% extends 'display.html' %}
 
 {% block action %}
-<form action="{{ url_for('delete_form') }}" method="POST">
-    <label for="customer_id">Customer Id</label>
-    <input type="number" name="customer_id" id="customer_id"><br><br>
-    
-    <label for="customer_name">Customer Name</label>
-    <input type="text" name="customer_name" id="customer_name"><br><br>
-
-    <label for="customer_type">Customer Type</label>
-    <input type="text" name="customer_type" id="customer_type" maxlength="1" placeholder="Please enter one character"><br><br>
-
-    <label for="date_time">Date and time</label>
-    <input type="datetime-local" name="date_time" id="date_time"><br>
+<form action="{{ url_for('delete_form', table_name = table_name) }}" method="POST">
+    {% for column,args in schema.items() %}
+    <label for="{{ column }}">{{ column }}</label>
+    <input 
+        type="{{ args.type }}" 
+        name="{{ column }}" 
+        id="{{ column }}" 
+        {% if args.maxlength %}maxlength="{{ args.maxlength }}"{% endif %}
+        {% if args.placeholder %}placeholder="{{ args.placeholder }}"{% endif %}><br><br>
+    {% endfor %}
 
     <button type="submit">Delete</button>
 </form>
